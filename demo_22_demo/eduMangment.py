@@ -96,22 +96,25 @@ class EduMangment:
         while True:
             print(mean)
             choice = input("请输入功能编号：")
-            match choice:
-                case "1":
-                    self.add_student()
-                case "2":
-                    self.update_student()
-                case "3":
-                    self.delete_student()
-                case "4":
-                    self.query_student()
-                case "5":
-                    self.list_student()
-                case "6":
-                    print("退出系统")
-                    break
-                case _:
-                    print("输入错误,请重新输入1-6之间")
+            try:
+                match choice:
+                    case "1":
+                        self.add_student()
+                    case "2":
+                        self.update_student()
+                    case "3":
+                        self.delete_student()
+                    case "4":
+                        self.query_student()
+                    case "5":
+                        self.list_student()
+                    case "6":
+                        print("退出系统")
+                        break
+                    case _:
+                        print("输入错误,请重新输入1-6之间")
+            except Exception as e:
+                print("run 方法异常",e)
 
 
 if __name__ == "__main__":
