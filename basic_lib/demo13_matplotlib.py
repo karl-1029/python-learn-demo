@@ -25,11 +25,11 @@ pyplot.show()                 显示图表
 """
 
 import matplotlib
-matplotlib.use("Agg")  # 无界面环境下也能运行，不弹窗
-
 import matplotlib.pyplot as plt
 
-# 让中文和负号正常显示（不同系统字体可能不同，这里做兼容尝试）
+matplotlib.use("Agg")  # 无界面环境下也能运行，不弹窗
+#
+# # 让中文和负号正常显示（不同系统字体可能不同，这里做兼容尝试）
 plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS", "DejaVu Sans"]
 plt.rcParams["axes.unicode_minus"] = False
 
@@ -86,8 +86,9 @@ def demo_barh():
     print("barh: 已生成水平柱状图 demo_barh.png")
 
 
+
 def demo_hist():
-    """直方图：查看数据分布"""
+    """直方图：查看数据分布 就是“分组”和“统计次数”。"""
     data = [1, 1, 2, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6]
     plt.figure()
     plt.hist(data, bins=6, color="purple", edgecolor="black")
@@ -148,8 +149,8 @@ def demo_ticks():
 def demo_legend():
     """显示图例"""
     plt.figure()
-    plt.plot([1, 2, 3], [1, 2, 3], label="线A")
-    plt.plot([1, 2, 3], [3, 2, 1], label="线B")
+    plt.plot([1, 2, 3], [1, 2, 3],marker="o", label="线A")
+    plt.plot([1, 2, 3], [3, 2, 1],marker="s", label="线B")
     plt.legend()
     plt.title("图例示例")
     plt.savefig("demo_legend.png")
@@ -172,7 +173,7 @@ def demo_text():
     """在指定坐标添加文字"""
     plt.figure()
     plt.plot([1, 2, 3], [1, 2, 3])
-    plt.text(2, 2, "这里是(2,2)", fontsize=12, color="red")
+    plt.text(2, 2, "这里是(2,2)",fontsize=12, color="red")
     plt.title("文字标注")
     plt.savefig("demo_text.png")
     plt.close()
