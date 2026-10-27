@@ -26,6 +26,10 @@ pyplot.show()                 显示图表
 
 import matplotlib
 import matplotlib.pyplot as plt
+import os
+
+
+os.mkdir("matplotlib_pic")
 
 matplotlib.use("Agg")  # 无界面环境下也能运行，不弹窗
 #
@@ -45,7 +49,7 @@ def demo_plot():
     plt.ylabel("y 轴")
     plt.legend()
     plt.grid(True)
-    plt.savefig("demo_plot.png")
+    plt.savefig("matplotlib_pic/demo_plot.png")
     plt.close()
     print("plot: 已生成折线图 demo_plot.png")
 
@@ -57,7 +61,7 @@ def demo_scatter():
     plt.figure()
     plt.scatter(x, y, color="red", s=60)
     plt.title("散点图示例")
-    plt.savefig("demo_scatter.png")
+    plt.savefig("matplotlib_pic/demo_scatter.png")
     plt.close()
     print("scatter: 已生成散点图 demo_scatter.png")
 
@@ -69,7 +73,7 @@ def demo_bar():
     plt.figure()
     plt.bar(categories, values, color="green")
     plt.title("柱状图示例")
-    plt.savefig("demo_bar.png")
+    plt.savefig("matplotlib_pic/demo_bar.png")
     plt.close()
     print("bar: 已生成柱状图 demo_bar.png")
 
@@ -81,7 +85,7 @@ def demo_barh():
     plt.figure()
     plt.barh(categories, values, color="orange")
     plt.title("水平柱状图示例")
-    plt.savefig("demo_barh.png")
+    plt.savefig("matplotlib_pic/demo_barh.png")
     plt.close()
     print("barh: 已生成水平柱状图 demo_barh.png")
 
@@ -93,7 +97,7 @@ def demo_hist():
     plt.figure()
     plt.hist(data, bins=6, color="purple", edgecolor="black")
     plt.title("直方图示例")
-    plt.savefig("demo_hist.png")
+    plt.savefig("matplotlib_pic/demo_hist.png")
     plt.close()
     print("hist: 已生成直方图 demo_hist.png")
 
@@ -105,7 +109,7 @@ def demo_pie():
     plt.figure()
     plt.pie(sizes, labels=labels, autopct="%1.1f%%")
     plt.title("饼图示例")
-    plt.savefig("demo_pie.png")
+    plt.savefig("matplotlib_pic/demo_pie.png")
     plt.close()
     print("pie: 已生成饼图 demo_pie.png")
 
@@ -117,7 +121,7 @@ def demo_title_labels():
     plt.title("标题设置")
     plt.xlabel("X 标签")
     plt.ylabel("Y 标签")
-    plt.savefig("demo_title_labels.png")
+    plt.savefig("matplotlib_pic/demo_title_labels.png")
     plt.close()
     print("title/xlabel/ylabel: 已设置标题与轴标签")
 
@@ -129,7 +133,7 @@ def demo_xlim_ylim():
     plt.xlim(0, 5)
     plt.ylim(0, 20)
     plt.title("坐标轴范围")
-    plt.savefig("demo_xlim_ylim.png")
+    plt.savefig("matplotlib_pic/demo_xlim_ylim.png")
     plt.close()
     print("xlim/ylim: 已设置坐标轴范围为 x(0,5), y(0,20)")
 
@@ -141,7 +145,7 @@ def demo_ticks():
     plt.xticks([1, 2, 3], ["一", "二", "三"])
     plt.yticks([10, 20, 30], ["低", "中", "高"])
     plt.title("自定义刻度")
-    plt.savefig("demo_ticks.png")
+    plt.savefig("matplotlib_pic/demo_ticks.png")
     plt.close()
     print("xticks/yticks: 已自定义刻度标签")
 
@@ -153,7 +157,7 @@ def demo_legend():
     plt.plot([1, 2, 3], [3, 2, 1],marker="s", label="线B")
     plt.legend()
     plt.title("图例示例")
-    plt.savefig("demo_legend.png")
+    plt.savefig("matplotlib_pic/demo_legend.png")
     plt.close()
     print("legend: 已显示图例")
 
@@ -164,7 +168,7 @@ def demo_grid():
     plt.plot([1, 2, 3], [2, 4, 1])
     plt.grid(True)
     plt.title("网格线示例")
-    plt.savefig("demo_grid.png")
+    plt.savefig("matplotlib_pic/demo_grid.png")
     plt.close()
     print("grid: 已显示网格线")
 
@@ -175,7 +179,7 @@ def demo_text():
     plt.plot([1, 2, 3], [1, 2, 3])
     plt.text(2, 2, "这里是(2,2)",fontsize=12, color="red")
     plt.title("文字标注")
-    plt.savefig("demo_text.png")
+    plt.savefig("matplotlib_pic/demo_text.png")
     plt.close()
     print("text: 已在坐标(2,2)添加文字")
 
@@ -187,7 +191,7 @@ def demo_annotate():
     plt.annotate("峰值", xy=(3, 9), xytext=(2, 7),
                  arrowprops=dict(arrowstyle="->"))
     plt.title("箭头注释")
-    plt.savefig("demo_annotate.png")
+    plt.savefig("matplotlib_pic/demo_annotate.png")
     plt.close()
     print("annotate: 已添加带箭头注释")
 
@@ -199,7 +203,7 @@ def demo_subplots():
     axes[0].set_title("子图1")
     axes[1].bar(["A", "B"], [3, 5])
     axes[1].set_title("子图2")
-    plt.savefig("demo_subplots.png")
+    plt.savefig("matplotlib_pic/demo_subplots.png")
     plt.close()
     print("subplots: 已生成 1x2 子图")
 
@@ -212,7 +216,7 @@ def demo_tight_layout():
     axes[1].plot([1, 2, 3], [3, 2, 1])
     axes[1].set_title("右图")
     plt.tight_layout()
-    plt.savefig("demo_tight_layout.png")
+    plt.savefig("matplotlib_pic/demo_tight_layout.png")
     plt.close()
     print("tight_layout: 已自动调整子图布局")
 
@@ -222,7 +226,7 @@ def demo_savefig():
     plt.figure()
     plt.plot([1, 2, 3], [3, 1, 2])
     plt.title("保存图片")
-    plt.savefig("demo_savefig.png", dpi=100)
+    plt.savefig("matplotlib_pic/demo_savefig.png", dpi=100)
     plt.close()
     print("savefig: 已保存图片 demo_savefig.png")
 
