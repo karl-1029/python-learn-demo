@@ -1,0 +1,61 @@
+{
+  "content": "",
+  "additional_kwargs": {
+    "refusal": null,
+    "reasoning_content": ""
+  },
+  "response_metadata": {
+    "token_usage": {
+      "completion_tokens": 40,
+      "prompt_tokens": 296,
+      "total_tokens": 336,
+      "completion_tokens_details": {
+        "accepted_prediction_tokens": null,
+        "audio_tokens": null,
+        "reasoning_tokens": 0,
+        "rejected_prediction_tokens": null,
+        "text_tokens": null
+      },
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cache_write_tokens": null,
+        "cached_tokens": 128,
+        "image_tokens": null,
+        "text_tokens": null
+      },
+      "prompt_cache_hit_tokens": 128,
+      "prompt_cache_miss_tokens": 168
+    },
+    "model_provider": "deepseek",
+    "model_name": "deepseek-flash",
+    "system_fingerprint": "bc19ba97cbe016479903222bb1578db6",
+    "id": "527e8b68-e959-4f0f-96ef-10f8aeed05ba",
+    "finish_reason": "tool_calls",
+    "logprobs": null
+  },
+  "type": "ai",
+  "name": null,
+  "id": "lc_run--01a181ef-534b-7749-b612-3505e500ba67-0",
+  "tool_calls": [
+    {
+      "name": "get_stock_price",
+      "args": {
+        "company": "阿里巴巴"
+      },
+      "id": "call_00_ET_wuEgR19t2RJnMUyZA7er0676",
+      "type": "tool_call"
+    }
+  ],
+  "invalid_tool_calls": [],
+  "usage_metadata": {
+    "input_tokens": 296,
+    "output_tokens": 40,
+    "total_tokens": 336,
+    "input_token_details": {
+      "cache_read": 128
+    },
+    "output_token_details": {
+      "reasoning": 0
+    }
+  }
+}
