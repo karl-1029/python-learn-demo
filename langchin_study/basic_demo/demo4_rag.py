@@ -45,8 +45,8 @@ documents = [
 
 embeddings = OpenAIEmbeddings(
     model=model_name,
-    api_key=api_key,
-    base_url=base_url,
+    openai_api_key=api_key,
+    openai_api_base=base_url,
     check_embedding_ctx_length=False,
 )
 
