@@ -18,17 +18,18 @@ RAG核心流程：文档加载→文本切分→向量化→向量库存储→�
 """
 
 import os
+
 from langchain_core.documents import Document
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_chroma  import Chroma
+from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 import dotenv
-
 
 dotenv.load_dotenv()
 model_name = os.getenv("QIANWEN_EMBEDDING_MODEL")
@@ -43,12 +44,18 @@ documents = [
     Document(page_content="向量数据库用于存储文档的向量表示", metadata={"source": "doc4"}),
 ]
 
-embeddings = OpenAIEmbeddings(
+# embeddings = OpenAIEmbeddings(
+#     model=model_name,
+#     openai_api_key=api_key,
+#     openai_api_base=base_url,
+#     check_embedding_ctx_length=False,
+# )
+
+embeddings = DashScopeEmbeddings (
     model=model_name,
-    openai_api_key=api_key,
-    openai_api_base=base_url,
-    check_embedding_ctx_length=False,
+    dashscope_api_key=api_key,
 )
+
 
 def demo_01_document_object():
     """构造Document文档对象"""
