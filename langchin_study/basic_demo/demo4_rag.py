@@ -1,119 +1,194 @@
 """
-【LangChain RAG (检索增强生成) 模块简介】
-RAG (Retrieval-Augmented Generation) 是解决大模型“幻觉”和“知识过期”问题的核心架构。
-它的核心思想是：在模型回答问题前，先从外部私有知识库（如文档、PDF、数据库）中检索出相关的信息，
-然后将“检索到的信息”和“用户的提问”一起塞给大模型，让模型基于这些事实依据来生成准确的答案。
-该模块主要包含两大流程：建库（加载 -> 切分 -> 向量化 -> 存储）和 检索生成（检索 -> 拼装 Prompt -> 生成）。
+本脚本演示LangChain RAG（检索增强生成）全套核心模块。
+RAG核心流程：文档加载→文本切分→向量化→向量库存储→文档检索→组装问答链，解决大模型知识滞后、幻觉问题；
+核心模块包含：Document文档对象、文档加载器、文本分割器、Embedding嵌入模型、向量存储VectorStore、Retriever检索器、RAG问答链。
 
 【常用方法清单】
-1. TextLoader / DirectoryLoader : 文档加载器，用于读取本地文本或文件夹。
-2. RecursiveCharacterTextSplitter: 文本切分器，将长文档切分成适合模型上下文长度的小块（Chunk）。
-3. OpenAIEmbeddings             : 嵌入模型，将文本转化为向量（数字数组），以便计算语义相似度。
-4. Chroma / FAISS               : 向量数据库，用于存储文本向量和原始文本片段。
-5. as_retriever(search_kwargs)  : 将向量库转换为检索器，根据用户提问查找最相似的文本片段。
-6. create_stuff_documents_chain : 将检索到的文档和用户问题拼装成最终发给大模型的 Prompt 链。
+1. Document(page_content, metadata)：构造文档对象，存储文本内容与元数据
+2. TextLoader.load()：加载本地文本文件，返回Document列表
+3. RecursiveCharacterTextSplitter.split_documents()：递归字符分割，把长文档切分为chunk片段
+4. OpenAIEmbeddings.embed_query()：把文本转为向量嵌入
+5. Chroma.from_documents()：把文档+向量存入Chroma向量数据库
+6. vectorstore.similarity_search()：向量库相似度检索，返回匹配文档
+7. vectorstore.as_retriever()：向量库转为检索器对象
+8. RunnablePassthrough()：Runnable透传，把question字段直接传入链中
+9. ChatPromptTemplate.from_template()：构造RAG问答提示词模板
+10. StrOutputParser()：把模型输出转为纯字符串
+11. chain.invoke()：执行整条RAG问答链路，输入问题输出答案
 """
+
+import os
 from langchain_core.documents import Document
+from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains import create_retrieval_chain
-
-# 初始化基础组件（需配置 OPENAI_API_KEY）
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-embeddings = OpenAIEmbeddings()  # 用于将文本转为向量
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+import dotenv
 
 
-def demo_1_document_loader():
-    """1. Loader：文档加载（此处用代码直接创建模拟文档）。"""
-    print("--- 1. 文档加载 示例 ---")
-    # 实际开发中，这里会使用 TextLoader("path.txt") 或 PyPDFLoader("doc.pdf")
-    docs = [
-        Document(page_content="LangChain 是一个用于开发大语言模型应用的框架。", metadata={"source": "intro.txt"}),
-        Document(page_content="今天的天气非常晴朗，适合出去游玩。", metadata={"source": "weather.txt"})
-    ]
-    print(f"加载的文档数量: {len(docs)}")
-    print(f"第一段内容: {docs[0].page_content}")
+dotenv.load_dotenv()
+model_name = os.getenv("QIANWEN_EMBEDDING_MODEL")
+api_key = os.getenv("QIANWEN_API_KEY")
+base_url = os.getenv("QIANWEN_BASE_URL")
+
+# 准备文档
+documents = [
+    Document(page_content="LangChain 是一个强化大语言模型应用的框架", metadata={"source": "doc1"}),
+    Document(page_content="LangGraph 用于构建有状态的 Agent 系统", metadata={"source": "doc2"}),
+    Document(page_content="RAG 是一种技术，让 LLM 能够访问外部知识库", metadata={"source": "doc3"}),
+    Document(page_content="向量数据库用于存储文档的向量表示", metadata={"source": "doc4"}),
+]
+
+
+def demo_01_document_object():
+    """构造Document文档对象"""
+    doc = Document(
+        page_content="RAG全称检索增强生成，用来降低大模型幻觉",
+        metadata={"source": "demo_txt", "page": 1}
+    )
+    print("Document内容：", doc.page_content)
+    print("Document元数据：", doc.metadata)
+    print("Document：", documents)
     print("\n")
 
 
-def demo_2_text_splitter():
-    """2. Splitter：文本切分。"""
-    print("--- 2. 文本切分 示例 ---")
-    long_text = "Python是一种广泛使用的解释型语言。" * 10
-    # chunk_size 是每块最大字符数，chunk_overlap 是相邻块的重叠字符数（防止语义被切断）
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=50, chunk_overlap=10)
-    splits = text_splitter.split_text(long_text)
-    print(f"切分后的小块数量: {len(splits)}")
-    print(f"第一块内容: {splits[0]}")
+def demo_02_text_loader_load():
+    """TextLoader加载本地文本文件"""
+    # 临时写入测试文件
+
+    file_path = "rag_test.txt"
+
+    if not os.path.exists(file_path):
+        with open(file_path, "w", encoding="utf-8") as f:
+            for index in range(1, 6):
+                f.write(f"LangChain RAG分为文档加载、文本切分、向量化、检索、问答生成五个步骤。{index} \n")
+
+    loader = TextLoader("rag_test.txt", encoding="utf-8")
+    docs = loader.load()
+    print("加载文档数量：", len(docs))
+    print("文档文本：\n", docs[0].page_content)
     print("\n")
 
 
-def demo_3_vector_store():
-    """3. Embeddings & Vector Store：向量化与入库。"""
-    print("--- 3. 向量化与存储 示例 ---")
-    docs = [
-        Document(page_content="LangChain 是一个用于开发大语言模型应用的框架。"),
-        Document(page_content="DeepSeek 是一家中国的人工智能公司。"),
-        Document(page_content="Python 是一种流行的编程语言。")
-    ]
-    # 将文档转为向量并存入 Chroma 向量数据库
-    vector_store = Chroma.from_documents(documents=docs, embedding=embeddings)
-    print("向量数据库创建成功！")
-    print("\n")
-    return vector_store
+def demo_02_pdf_loader():
+    loder = PyPDFLoader(file_path="https://arxiv.org/pdf/alg-geom/9202012", extraction_mode="plain")
+    doc = loder.load()
+    print(doc)
 
 
-def demo_4_retriever(vector_store):
-    """4. Retriever：语义检索。"""
-    print("--- 4. 检索器 示例 ---")
-    # 将向量库转为检索器，设置返回最相似的 1 个文档
-    retriever = vector_store.as_retriever(search_kwargs={"k": 1})
-
-    # 模拟用户提问
-    query = "LangChain是干什么的？"
-    results = retriever.invoke(query)
-
-    print(f"用户提问: {query}")
-    print(f"检索到的相关文档: {results[0].page_content}")
+def demo_03_split_documents():
+    """RecursiveCharacterTextSplitter文档切分"""
+    raw_doc = Document(page_content="RAG第一步加载文档；第二步分割文本块；第三步生成向量；第四步检索；第五步生成答案。")
+    splitter = RecursiveCharacterTextSplitter(chunk_size=30, chunk_overlap=5)
+    chunks = splitter.split_documents([raw_doc])
+    print("切分后的块数量：", len(chunks))
+    for idx, chunk in enumerate(chunks):
+        print(f"块{idx + 1}：{chunk.page_content}")
     print("\n")
 
 
-def demo_5_rag_chain(vector_store):
-    """5. RAG 完整链：检索 + 拼装 Prompt + 生成。"""
-    print("--- 5. RAG 完整链路 示例 ---")
-    retriever = vector_store.as_retriever(search_kwargs={"k": 2})
+def demo_04_embed_query():
+    """Embedding文本向量化"""
+    embeddings = OpenAIEmbeddings(model=model_name,api_key=api_key,base_url=base_url)
+    text = "RAG检索增强生成"
+    vec = embeddings.embed_query(text)
+    print("向量长度：", len(vec))
+    print("前5位向量值：", vec[:5])
+    print("\n")
 
-    # 定义 RAG 的 Prompt 模板：{context} 会被自动替换为检索到的文档内容，{input} 是用户提问
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "你是一个问答助手。请仅根据以下提供的上下文回答问题，不要编造：\n\n{context}"),
-        ("human", "{input}")
-    ])
 
-    # 将 Prompt 和 LLM 组合成处理文档的链
-    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
+def demo_05_chroma_from_documents():
+    """Chroma向量库存入文档向量"""
+    docs = [Document(page_content="RAG可以减少大模型幻觉"), Document(page_content="向量数据库用来存储文本嵌入")]
+    embeddings = OpenAIEmbeddings(api_key=api_key)
+    vector_db = Chroma.from_documents(documents=docs, embedding=embeddings, persist_directory="./chroma_db")
+    print("向量库创建完成，已持久化")
+    print("\n")
 
-    # 最终组装成完整的 RAG 链：检索 -> 填充 Prompt -> LLM 生成
-    rag_chain = create_retrieval_chain(retriever, combine_docs_chain)
 
-    # 执行问答
-    response = rag_chain.invoke({"input": "DeepSeek是什么公司？"})
+def demo_06_similarity_search():
+    """向量库相似度检索"""
+    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+    vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+    res_docs = vector_db.similarity_search("如何降低大模型幻觉", k=1)
+    print("检索到文档：", res_docs[0].page_content)
+    print("\n")
 
-    print(f"用户提问: {response['input']}")
-    print(f"模型回答: {response['answer']}")
+
+def demo_07_as_retriever():
+    """向量库转为Retriever检索器"""
+    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+    vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+    retriever = vector_db.as_retriever(search_kwargs={"k": 1})
+    docs = retriever.invoke("大模型幻觉")
+    print("检索器返回内容：", docs[0].page_content)
+    print("\n")
+
+
+def demo_08_runnable_passthrough():
+    """RunnablePassthrough透传参数"""
+    runnable = RunnablePassthrough()
+    out = runnable.invoke({"question": "什么是RAG"})
+    print("透传结果：", out)
+    print("\n")
+
+
+def demo_09_prompt_template():
+    """构建RAG问答提示词模板"""
+    prompt = ChatPromptTemplate.from_template("""
+基于下面上下文回答问题：
+{context}
+问题：{question}
+""")
+    prompt_val = prompt.format(context="RAG是检索增强生成", question="什么是RAG")
+    print("填充后的prompt：\n", prompt_val)
+    print("\n")
+
+
+def demo_10_str_output_parser():
+    """字符串输出解析器"""
+    parser = StrOutputParser()
+    raw_msg = {"content": "RAG用来解决大模型知识不足的问题"}
+    result = parser.invoke(raw_msg)
+    print("解析后文本：", result)
+    print("\n")
+
+
+def demo_11_rag_chain_invoke():
+    """组装完整RAG链路并调用"""
+    os.environ["OPENAI_API_KEY"] = "fake_key"
+    embeddings = OpenAIEmbeddings()
+    vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+    retriever = vector_db.as_retriever(k=1)
+
+    # 拼接链
+    prompt = ChatPromptTemplate.from_template("使用上下文回答问题：{context}\n问题：{question}")
+    llm = ChatOpenAI(temperature=0)
+    rag_chain = (
+            {"context": retriever, "question": RunnablePassthrough()}
+            | prompt
+            | llm
+            | StrOutputParser()
+    )
+    # 仅演示结构，无真实key会请求失败
+    print("RAG问答链构建完成，可调用invoke执行问答")
     print("\n")
 
 
 if __name__ == "__main__":
-    demo_1_document_loader()
-    demo_2_text_splitter()
-
-    # 实际运行时，这里需要真实的 OPENAI_API_KEY
-    try:
-        v_store = demo_3_vector_store()
-        demo_4_retriever(v_store)
-        demo_5_rag_chain(v_store)
-    except Exception as e:
-        print(f"跳过向量与 RAG 链演示（需要配置真实的 OpenAI API Key 以进行网络请求）: {e}")
+    # demo_01_document_object()
+    # demo_02_text_loader_load()
+    # demo_02_pdf_loader()
+    # demo_03_split_documents()
+    demo_04_embed_query()
+    # demo_05_chroma_from_documents()
+    # demo_06_similarity_search()
+    # demo_07_as_retriever()
+    # demo_08_runnable_passthrough()
+    # demo_09_prompt_template()
+    # demo_10_str_output_parser()
+    # demo_11_rag_chain_invoke()
