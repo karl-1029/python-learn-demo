@@ -23,7 +23,7 @@ from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_community.vectorstores import Chroma
+from langchain_chroma  import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
@@ -43,6 +43,12 @@ documents = [
     Document(page_content="向量数据库用于存储文档的向量表示", metadata={"source": "doc4"}),
 ]
 
+embeddings = OpenAIEmbeddings(
+    model=model_name,
+    api_key=api_key,
+    base_url=base_url,
+    check_embedding_ctx_length=False,
+)
 
 def demo_01_document_object():
     """构造Document文档对象"""
@@ -93,7 +99,6 @@ def demo_03_split_documents():
 
 def demo_04_embed_query():
     """Embedding文本向量化"""
-    embeddings = OpenAIEmbeddings(model=model_name,api_key=api_key,base_url=base_url)
     text = "RAG检索增强生成"
     vec = embeddings.embed_query(text)
     print("向量长度：", len(vec))
@@ -104,7 +109,6 @@ def demo_04_embed_query():
 def demo_05_chroma_from_documents():
     """Chroma向量库存入文档向量"""
     docs = [Document(page_content="RAG可以减少大模型幻觉"), Document(page_content="向量数据库用来存储文本嵌入")]
-    embeddings = OpenAIEmbeddings(api_key=api_key)
     vector_db = Chroma.from_documents(documents=docs, embedding=embeddings, persist_directory="./chroma_db")
     print("向量库创建完成，已持久化")
     print("\n")
@@ -112,7 +116,6 @@ def demo_05_chroma_from_documents():
 
 def demo_06_similarity_search():
     """向量库相似度检索"""
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
     vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
     res_docs = vector_db.similarity_search("如何降低大模型幻觉", k=1)
     print("检索到文档：", res_docs[0].page_content)
@@ -121,7 +124,6 @@ def demo_06_similarity_search():
 
 def demo_07_as_retriever():
     """向量库转为Retriever检索器"""
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
     vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
     retriever = vector_db.as_retriever(search_kwargs={"k": 1})
     docs = retriever.invoke("大模型幻觉")
@@ -160,8 +162,6 @@ def demo_10_str_output_parser():
 
 def demo_11_rag_chain_invoke():
     """组装完整RAG链路并调用"""
-    os.environ["OPENAI_API_KEY"] = "fake_key"
-    embeddings = OpenAIEmbeddings()
     vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
     retriever = vector_db.as_retriever(k=1)
 
@@ -184,8 +184,8 @@ if __name__ == "__main__":
     # demo_02_text_loader_load()
     # demo_02_pdf_loader()
     # demo_03_split_documents()
-    demo_04_embed_query()
-    # demo_05_chroma_from_documents()
+    # demo_04_embed_query()
+    demo_05_chroma_from_documents()
     # demo_06_similarity_search()
     # demo_07_as_retriever()
     # demo_08_runnable_passthrough()
