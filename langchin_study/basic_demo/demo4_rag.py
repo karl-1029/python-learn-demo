@@ -19,22 +19,21 @@ RAG核心流程：文档加载→文本切分→向量化→向量库存储→�
 
 import os
 
+from langchain.chat_models import init_chat_model
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_community.document_loaders import TextLoader
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 import dotenv
 
 dotenv.load_dotenv()
-model_name = os.getenv("QIANWEN_EMBEDDING_MODEL")
-api_key = os.getenv("QIANWEN_API_KEY")
-base_url = os.getenv("QIANWEN_BASE_URL")
+
 
 # 准备文档
 documents = [
@@ -51,10 +50,22 @@ documents = [
 #     check_embedding_ctx_length=False,
 # )
 
+# init embeddings model
+model_name = os.getenv("QIANWEN_EMBEDDING_MODEL")
+api_key = os.getenv("QIANWEN_API_KEY")
+base_url = os.getenv("QIANWEN_BASE_URL")
+
 embeddings = DashScopeEmbeddings (
     model=model_name,
     dashscope_api_key=api_key,
 )
+
+# init llm model
+api_key = os.getenv("DEEPSEEK_API_KEY")
+base_url = os.getenv("DEEPSEEK_BASE_URL")
+model_name = os.getenv("DEEPSEEK_MODEL")
+
+llm = init_chat_model(model_name, temperature=0.7)
 
 
 def demo_01_document_object():
@@ -129,6 +140,12 @@ def demo_06_similarity_search():
     print("\n")
 
 
+    param = embeddings.embed_query("大模型幻觉")
+    res_docs = vector_db.similarity_search_by_vector(param, k=1)
+    print("检索到文档：", res_docs[0].page_content)
+
+
+
 def demo_07_as_retriever():
     """向量库转为Retriever检索器"""
     vector_db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
@@ -161,7 +178,7 @@ def demo_09_prompt_template():
 def demo_10_str_output_parser():
     """字符串输出解析器"""
     parser = StrOutputParser()
-    raw_msg = {"content": "RAG用来解决大模型知识不足的问题"}
+    raw_msg = "RAG用来解决大模型知识不足的问题"
     result = parser.invoke(raw_msg)
     print("解析后文本：", result)
     print("\n")
@@ -174,7 +191,6 @@ def demo_11_rag_chain_invoke():
 
     # 拼接链
     prompt = ChatPromptTemplate.from_template("使用上下文回答问题：{context}\n问题：{question}")
-    llm = ChatOpenAI(temperature=0)
     rag_chain = (
             {"context": retriever, "question": RunnablePassthrough()}
             | prompt
@@ -183,7 +199,8 @@ def demo_11_rag_chain_invoke():
     )
     # 仅演示结构，无真实key会请求失败
     print("RAG问答链构建完成，可调用invoke执行问答")
-    print("\n")
+    result = rag_chain.invoke("降低大模型幻觉？")
+    print(result)
 
 
 if __name__ == "__main__":
@@ -192,10 +209,10 @@ if __name__ == "__main__":
     # demo_02_pdf_loader()
     # demo_03_split_documents()
     # demo_04_embed_query()
-    demo_05_chroma_from_documents()
+    # demo_05_chroma_from_documents()
     # demo_06_similarity_search()
     # demo_07_as_retriever()
     # demo_08_runnable_passthrough()
     # demo_09_prompt_template()
     # demo_10_str_output_parser()
-    # demo_11_rag_chain_invoke()
+    demo_11_rag_chain_invoke()
